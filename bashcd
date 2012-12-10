@@ -1,0 +1,416 @@
+#!/bin/sh
+
+special_cd_menu() {
+	declare -a matches=("${!1}")
+
+	if [ ${#matches[*]} -eq 0 ] ; then
+		echo "No matching directories were found"
+	elif [ ${#matches[*]} -eq 1 ] ; then
+		cd $matches
+	else
+		echo
+		echo "Please choose a directory to change to"
+		echo "--------------------------------------"
+		i=1
+		for dir in ${matches[@]} ; do
+			printf '%3d. %s \n' $i $dir
+			let i=$i+1
+		done
+
+		echo
+		printf "Your choice: " 
+		read which_match
+		let which_match=$which_match-1
+
+		#Print one more line -- it looks odd otherwise
+		echo
+        
+		cd ${matches[which_match]}
+	fi
+}
+
+ucd() {
+	CURRENT_DIR=`pwd`
+	MATCHES_TEXT=`dirname $CURRENT_DIR | sed 's#/# #g' | sort | uniq`
+	MATCHES=()
+	curr=0
+	for match in $MATCHES_TEXT; do
+		if [[ "$match" == "$1" ]]; then
+			MATCHES[$curr]=$match
+			let curr=$curr+1
+		fi
+	done
+
+	if [ ${#MATCHES[*]} -eq 0 ] ; then
+		echo "No matching directories were found"
+	elif [ ${#MATCHES[*]} -eq 1 ] ; then
+		cd `dirname $CURRENT_DIR | grep -Eo "^.*$MATCHES"`
+	else
+		echo
+		echo "Please choose a directory to change to"
+		echo "--------------------------------------"
+		i=1
+		maxcount=`echo "$CURRENT_DIR" | grep -Eo "/" | wc -l`
+		menuindex=1;
+
+		PARENT_DIR=`dirname $CURRENT_DIR`
+		DIR_MATCHES=()
+
+		while [ $i -le $maxcount ]; do
+			dir=`echo $PARENT_DIR | grep -Eo "^([^/]*/){$i}$1"`			
+			if [ $? -eq 0 ]; then
+				DIR_MATCHES[`expr $menuindex - 1`]=$dir
+				printf '%3d. %s \n' $menuindex $dir
+				let menuindex=$menuindex+1
+			fi
+			let i=$i+1
+		done
+	
+		echo
+		printf "Your choice: " 
+		read which_match
+		let which_match=$which_match-1
+
+		#Print one more line -- it looks odd otherwise
+		echo
+        
+		cd ${DIR_MATCHES[which_match]}
+	fi
+}
+
+ucd_completion() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+	CURRENT_DIR=`pwd`
+	MATCHES_TEXT=`dirname $CURRENT_DIR | sed 's#/# #g' | sort | uniq`
+
+	COMPREPLY=( $(compgen -W "${MATCHES_TEXT}" -- ${cur}) )
+	return 0
+
+}
+
+complete -F ucd_completion ucd
+
+fcd() {    
+    MATCHES_TEXT=`find . -name $1* -type d`
+    MATCHES=( $MATCHES_TEXT )
+
+    special_cd_menu MATCHES[@]
+}
+
+#Allow bash command line completion of fcd commands.  This does have this side effect
+#of possibly running the find command twice, but this doesn't seem to be a large problem
+#in practice.
+fcd_completion() {
+	local cur prev options
+	COMPREPLY=()
+	cur=`echo "${COMP_WORDS[COMP_CWORD]}" | sed 's/^ *//'`
+	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
+
+	# $2 is the option to fcd.  If there hasn't been one, it will be blank and
+	# we'll complete on everything.  That's too risky for me, so I will impose a 
+	# depth limit if there wasn't a parameter passed.
+	if [ -n "$2" ]; then
+		opts=`find . -type d -name "$2*" -exec basename {} \; | sort | uniq`
+	else
+		opts=`find . -type d -maxdepth 5 -name "*" -exec basename {} \; | sort | uniq`
+	fi
+
+	if [ -n ${cur} ] ; then
+		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		return 0
+	fi	
+}
+complete -F fcd_completion fcd
+
+lcd() {
+	currentItem=0
+	matches=()
+
+	# Construct a list of all locate entries that are directories and that match
+	for dir in `locate $1 | grep $1[^/]*$` ; do
+		if [ -d $dir ] ; then       
+			matches[currentItem]=$dir
+			currentItem=$currentItem+1
+		fi
+	done
+
+	special_cd_menu matches[@]
+}
+
+
+lcd_completion() {
+	local cur prev options
+	COMPREPLY=()
+	cur=`echo "${COMP_WORDS[COMP_CWORD]}" | sed 's/^ *//'`
+	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
+
+	#print "\nOptions: $1 $2\n"
+
+	# $2 is the option to lcd.  If there hasn't been one, it will be blank and
+	# we'll complete on everything in the locate database.  That's not worth it
+	# to me.
+	if [ -n "$2" ]; then
+		opts=`locate $2 | xargs -I{} dirname {} | grep "$2[^/]*$" | xargs -I{} basename {} | sort | uniq`
+	fi
+
+	if [ -n ${cur} ] ; then
+		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		return 0
+	fi	
+}
+complete -F lcd_completion lcd
+
+mcd() {
+	currentItem=0
+	matches=()
+
+	# Construct a list of all locate entries that are directories and that match
+	for dir in `mdfind -name $1 | grep $1[^/]*$ | sort` ; do
+		if [ -d $dir ] ; then       
+			matches[currentItem]=$dir
+			currentItem=$currentItem+1
+		fi
+	done
+
+	special_cd_menu matches[@]
+}
+
+mcd_completion() {
+	local cur prev options
+	COMPREPLY=()
+	cur=`echo "${COMP_WORDS[COMP_CWORD]}" | sed 's/^ *//'`
+	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
+
+	#print "\nOptions: $1 $2\n"
+
+	# $2 is the option to lcd.  If there hasn't been one, it will be blank and
+	# we'll complete on everything in the locate database.  That's not worth it
+	# to me.
+	if [ -n "$2" ]; then
+		opts=`mdfind -name $2 | xargs -I{} dirname {} | grep "$2[^/]*$" | xargs -I{} basename {} | sort | uniq`
+	fi
+
+	if [ -n ${cur} ] ; then
+		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		return 0
+	fi	
+}
+complete -F mcd_completion mcd
+
+filecd() {
+    MATCHES_TEXT=`find . -name $1 -type f -exec dirname {} \;`
+    MATCHES=( $MATCHES_TEXT )
+
+    special_cd_menu MATCHES[@]
+}
+
+filecd_completion() {
+	local cur prev options
+	COMPREPLY=()
+	cur=`echo "${COMP_WORDS[COMP_CWORD]}" | sed 's/^ *//'`
+	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
+
+	# $2 is the option to fcd.  If there hasn't been one, it will be blank and
+	# we'll complete on everything.  That's too risky for me, so I will impose a 
+	# depth limit if there wasn't a parameter passed.
+	if [ -n "$2" ]; then
+		opts=`find . -type f -name "$2*" -exec basename {} \; | sort | uniq`
+	fi
+
+	if [ -n ${cur} ] ; then
+		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+		return 0
+	fi	 
+}
+complete -F filecd_completion filecd
+
+
+usage() 
+{
+    cat << EOF
+
+Usage
+-----
+
+  dcd <alias>
+Changes to the directory alias which matches the parameter
+listed for <alias> in the file ~/.dcd/dcd.conf
+
+  dcd -e
+Edit the list of directory aliases via an editor
+
+  dcd -l
+List the directory alias file.
+
+  dcd -q
+Figure out what aliases are associated with the current 
+directory.
+
+  dcd -d <alias>
+Remove any aliases pointing to the current directory from
+the dcd config file.
+
+  dcd -a <alias>
+Add the current directory to the dcd.conf file using the 
+provided alias.
+
+Example
+-------
+If ~/.dcd/dcd.conf contained the following lines:
+ora=/opt/oracle/product/10.2.0/db_1
+jboss=/opt/dev/jboss/jboss-4.0.4
+
+Then typing 
+  dcd ora
+would change to /opt/oracle/product/10.2.0/db_1
+
+EOF
+}
+
+dcd() 
+{
+  if [ $# -eq 0 ] ; then
+    usage
+    return
+  elif [ $1 == "-d" ]; then
+    if [ $# -lt 2 ]; then
+      echo "Please provide the name of the alias you want to delete."
+      echo
+      return
+    fi
+
+    if [ $# -gt 2 ]; then
+      echo "Too many command line parameters"
+      echo
+      usage
+      return
+    fi 
+
+    #Delete the actual line from the file
+    cp -f ~/.dcd/dcd.conf ~/.dcd/dcd.conf.backup
+    sed "/$2=/d" ~/.dcd/dcd.conf > ~/.dcd/dcd.conf.new
+    cp -f ~/.dcd/dcd.conf.new ~/.dcd/dcd.conf
+
+    return
+  elif [ $1 == "-a" ]; then
+    if [ $# -lt 2 ]; then
+      echo "Please provide a name for the new alias."
+      echo
+      return      
+    fi
+
+    # make sure there is a dcd.conf file, if not, create one
+    if [ ! -d ~/.dcd ]; then
+      mkdir ~/.dcd
+    fi
+
+    if [ ! -f ~/.dcd/dcd.conf ]; then
+      touch ~/.dcd/dcd.conf
+    fi
+
+    # make sure there isn't already an alias with this name
+    ALIAS_EXISTS=`grep "^$2=" ~/.dcd/dcd.conf`
+    if [ $? -eq 0 ] ; then 
+      echo "An alias by this name already exists, please choose another name."   
+      echo
+      return
+    fi
+
+    if [ $# -gt 2 ]; then
+      echo "Too many command line parameters"
+      echo
+      usage
+      return
+    fi
+
+    if [ ! -e ~/.dcd/dcd.conf ]; then
+      echo "# Dcd Configuration file" > ~/.dcd/dcd.conf
+      echo "#" >> ~/.dcd/dcd.conf
+      echo "# Add directory entries below as alias=directory" >> ~/.dcd/dcd.conf
+      echo >> ~/.dcd/dcd.conf
+    fi
+
+    NEW_DIR=`pwd`
+    echo "$2=$NEW_DIR" >> ~/.dcd/dcd.conf
+    return
+  elif [ $1 == "-e" ]; then
+    nano ~/.dcd/dcd.conf
+    return
+  elif [ $1 == "-l" ]; then
+    cat ~/.dcd/dcd.conf
+    return
+  elif [ $1 == "-q" ]; then
+    cat ~/.dcd/dcd.conf | grep "$(pwd)" | awk -F "=" '{ print $1 }' 
+	return
+  fi
+
+  if [ ! -f ~/.dcd/dcd.conf ]; then
+    echo "No directory aliases have been configured for dcd."
+    echo "to add a directory alias, type dcd -edit"
+    return
+  fi
+
+  # Support the form dcd code/Personal looking up the code alias
+  # and going into the subdir Personal
+  DCD_ALIAS=${1/\/*/}
+  if [[ "$1" = *"/"* ]]; then
+    DCD_SUBDIR=`echo $1 | sed -e "s#[^/]*/##"`
+  else 
+    DCD_SUBDIR=""
+  fi
+
+  # Find the provided string in the dcd.conf file.  We only
+  # look for matches that begin with a "^" and end with a "="
+  # which means we don't allow partial completions.  (We do 
+  # provide programmatic completion though.)
+  #
+  # I could have just provided a list and let the user pick
+  # the proper option from the list, but I like programmatic 
+  # completion more.  Also, if the user has too many things 
+  # to complete, that gets ugly quickly.
+  DIR=`grep "^$DCD_ALIAS=" ~/.dcd/dcd.conf`
+  if [ $? -eq 0 ] ; then    
+    # There are a couple of tricks here which are worth reminding 
+    # myself of in case I need them later.  The reason why this isn't
+    # just a simple cd $DIR is because of spaces in file names.  We
+    # use sed to replace the spaces with "\ " and then make sure that 
+    # the cd is wrapped in quotes.
+    if [[ -z "$DCD_SUBDIR" ]]; then
+      cd "`echo $DIR | awk -F "=" '{ print $2 }' | sed 's/ /\\ /g'`"
+    else
+      cd "`echo $DIR | awk -F "=" '{ print $2 }' | sed 's/ /\\ /g'`/$DCD_SUBDIR"
+    fi
+  else
+    echo "Directory alias $DCD_ALIAS not found in ~/.dcd/dcd.conf"
+  fi
+}
+
+dcd_completion() 
+{
+    # TODO: We need to work on making completion work properly when 
+    # we append a subdir in dcd.  For example dcd code/Personal.  
+    # the personal part doesn't work at all right now.
+
+    local cur prev opts
+    COMPREPLY=()
+    cur=`echo "${COMP_WORDS[COMP_CWORD]}" | sed 's/^ *//'`
+    prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
+    opts=`cat ~/.dcd/dcd.conf | awk -F "=" '{ print $1 }'`
+
+    if [ -n ${cur} ] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return 0
+    fi
+}
+complete -F dcd_completion dcd
+
+export -f dcd
+export -f fcd
+export -f filecd
+export -f lcd
+export -f mcd
+export -f ucd
