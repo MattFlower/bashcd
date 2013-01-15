@@ -1,5 +1,16 @@
 #!/bin/sh
 
+# Copyright (c) 2013, Matthew Flower
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#    Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#    Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#    Neither the name of the Matthew Flower nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
 special_cd_menu() {
 	declare -a matches=("${!1}")
 
@@ -219,7 +230,66 @@ complete -F fcd_completion fcd
 # lcd
 #----------------------------------------------------------------------------------------------------------------
 
+lcd_usage() {
+    cat << EOF
+
+Usage
+-----
+
+  lcd <some_string>
+
+Searches in the locate database for a directory which starts with the string 
+<some_string>.  If there is only a single file found, you will immediately be 
+switched to that directory.  If there are more than one directory found, you 
+will receive a list of matching directories and you can choose one.
+
+Note that lcd supports the autocompletion functionality in bash.  Just use the
+tab key to complete a word you are typing.  Ambiguous strings, such as single
+letters, are probably a bad idea because they will return an enormous list of 
+results from locate.
+
+Limitations
+-----------
+This command works great on machines where the locate database is updated 
+frequently.  If you are unfamiliar with it, the locate database is often found 
+at /var/db/locate.database.  Some sysadmins turn this database off, making it 
+useless for this command.
+
+The locate database is usually updated on something like an hourly cycle.  If 
+your directory was created more recently than that, this command will not be 
+able to see it.  Also, if a directory was deleted since then, this command 
+may erroneously try to change to a directory which is not around anymore.
+
+Finally, OS X users should skip right on over the mcd instead.  The locate 
+database is not updated by default on OS X machines, but the mdfind database 
+is -- it is a faster and superior choice for os x boxes.
+
+Example
+-------
+    /Users/mflower$ lcd man3
+    
+    Please choose a directory to change to
+    --------------------------------------
+      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3 
+      2. /Developer/usr/X11/share/man/man3 
+      3. /Developer/usr/share/man/man3 
+      4. /opt/local/share/man/man3 
+      5. /opt/local/share/man/man3p 
+      6. /opt/subversion/man/man3 
+      7. /opt/subversion_backup.09192012155729/man/man3 
+      8. /usr/X11/share/man/man3 
+      9. /usr/share/man/man3 
+    
+    Your choice: 
+EOF
+}
+
 lcd() {
+  if [ $# -eq 0 ] ; then
+    lcd_usage
+    return
+  fi
+
 	currentItem=0
 	matches=()
 
@@ -261,7 +331,53 @@ complete -F lcd_completion lcd
 # mcd
 #----------------------------------------------------------------------------------------------------------------
 
+mcd_usage() {
+    cat << EOF
+
+Usage
+-----
+
+  mcd <some_string>
+
+Searches in the mdfind database for a directory which starts with the string 
+<some_string>.  If there is only a single file found, you will immediately be 
+switched to that directory.  If there are more than one directory found, you 
+will receive a list of matching directories and you can choose one.
+
+Note that mcd supports the autocompletion functionality in bash.  Just use the
+tab key to complete a word you are typing.  
+
+Limitations
+-----------
+This command only works on machines with an mdfind database -- as far as I know,
+this is only OS X boxes which have spotlight on them.
+
+Example
+-------
+    /Users/mflower$ mcd man3
+    
+    Please choose a directory to change to
+    --------------------------------------
+      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3 
+      2. /Developer/usr/X11/share/man/man3 
+      3. /Developer/usr/share/man/man3 
+      4. /opt/local/share/man/man3 
+      5. /opt/local/share/man/man3p 
+      6. /opt/subversion/man/man3 
+      7. /opt/subversion_backup.09192012155729/man/man3 
+      8. /usr/X11/share/man/man3 
+      9. /usr/share/man/man3 
+    
+    Your choice: 
+EOF
+}
+
 mcd() {
+  if [ $# -eq 0 ] ; then
+    mcd_usage
+    return
+  fi
+
 	currentItem=0
 	matches=()
 
