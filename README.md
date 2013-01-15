@@ -1,4 +1,3 @@
-
 Intro
 =====
 
@@ -37,11 +36,6 @@ indexing that happens constantly on the mac.
 Switch to a parent directory of the current directory.  For example, if the current directory is /home/mflower/code/opensource, 
 you could use ucd home to switch to the /home directory.
 
-Documentation
-=============
-All commands have a help file built into them.  Type the command and press enter to see the help.  I've also copied these
-help files into the wiki: <https://github.com/MattFlower/bashcd/wiki>
-
 Installation
 ============
 Copy the file https://raw.github.com/MattFlower/bashcd/master/bashcd to a local file called .bashcd in your root directory.
@@ -51,6 +45,11 @@ Add the following line to your .profile, .bashrc, or .bash_profile.
 
 Once you restart your terminal bashcd will be automatically initialized.  If you wish to try it out without installing it 
 permanently, you can type "source <path to your .bashcd file>" (without the < and > marks).
+
+Documentation
+=============
+All commands have a help file built into them.  Type the command and press enter to see the help.  I've also copied these
+help files into the wiki: <https://github.com/MattFlower/bashcd/wiki>
 
 Features
 ========
