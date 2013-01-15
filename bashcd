@@ -29,8 +29,40 @@ special_cd_menu() {
 	fi
 }
 
+#----------------------------------------------------------------------------------------------------------------
+# ucd
+#----------------------------------------------------------------------------------------------------------------
+
+ucd_usage() {
+    cat << EOF
+
+Usage
+-----
+
+  ucd <directory name>
+
+ucd changes to any parent directory of your current directory.  It also supports
+autocompletion so you can complete the name easily without having to type it out.
+
+This should prevent the mental math necessary to figure out how many dots you will 
+need to type when doing something like cd ../../../..
+
+Example
+-------
+/home/mflower/a/b/c/d/e/f/g$ ucd c 
+/home/mflower/a/b/c$ 
+
+EOF
+
+}
+
 ucd() {
-	CURRENT_DIR=`pwd`
+    if [ $# -eq 0 ] ; then
+    	ucd_usage
+    	return
+    fi
+
+    CURRENT_DIR=`pwd`
 	MATCHES_TEXT=`dirname $CURRENT_DIR | sed 's#/# #g' | sort | uniq`
 	MATCHES=()
 	curr=0
@@ -94,7 +126,64 @@ ucd_completion() {
 
 complete -F ucd_completion ucd
 
+#----------------------------------------------------------------------------------------------------------------
+# fcd
+#----------------------------------------------------------------------------------------------------------------
+
+fcd_usage() 
+{
+    cat << EOF
+
+Usage
+-----
+
+  fcd <some_string>
+
+Searches all directories starting at the current one for a file which starts 
+with the string <some_string>.  If there is only a single file found, you will
+immediately be switched to that directory.  If there are more than one directory
+found, you will receive a list of matching directories and you can choose one.
+
+Note that fcd supports the autocompletion functionality in bash.  Just use the
+tab key to complete a word you are typing.  This will invoke find on the entire
+directory tree under your current word, so use it wisely.
+
+Example
+-------
+If you were currently in the directory /home/mflower and the following directories 
+were present:
+
+    /home/mflower/code/test1
+    /home/mflower/code/test2
+    /home/mflower/code/oldcode
+
+Here are a list of commands and what they would do:
+
+    /home/mflower$ fcd test1
+    /home/mflower/code/test1$ cd ../..
+    /home/mflower$ fcd test 
+    
+    Please choose a directory to change to
+    --------------------------------------
+      1. ./code/test1
+      2. ./code/test2
+    
+    Your choice: 2
+    
+    /home/mflower/code/test2$ cd ../..
+    /home/mflower$ fcd asdf
+    No matching directories were found
+    /home/mflower$
+
+EOF
+}
+
 fcd() {    
+    if [ $# -eq 0 ] ; then
+    	fcd_usage
+    	return
+    fi
+
     MATCHES_TEXT=`find . -name $1* -type d`
     MATCHES=( $MATCHES_TEXT )
 
@@ -125,6 +214,10 @@ fcd_completion() {
 	fi	
 }
 complete -F fcd_completion fcd
+
+#----------------------------------------------------------------------------------------------------------------
+# lcd
+#----------------------------------------------------------------------------------------------------------------
 
 lcd() {
 	currentItem=0
@@ -164,6 +257,10 @@ lcd_completion() {
 }
 complete -F lcd_completion lcd
 
+#----------------------------------------------------------------------------------------------------------------
+# mcd
+#----------------------------------------------------------------------------------------------------------------
+
 mcd() {
 	currentItem=0
 	matches=()
@@ -201,7 +298,42 @@ mcd_completion() {
 }
 complete -F mcd_completion mcd
 
+#----------------------------------------------------------------------------------------------------------------
+# filecd
+#----------------------------------------------------------------------------------------------------------------
+
+filecd_usage() {
+    cat << EOF
+
+Usage
+-----
+
+  filecd <name of a source file>
+
+Filecd helps you change to a directory where a file is located. 
+
+Example
+-------
+If the following file existed:
+
+    /home/mflower/a/b/c/d/e/somefile.txt 
+
+And you typed:
+
+    /home/mflower$ filecd somefile.txt
+    /home/mflower/a/b/c/d/e/$ 
+
+Your current directory would be /home/mflower/a/b/c/d/e/ directory.
+
+EOF
+}
+
 filecd() {
+    if [ $# -eq 0 ] ; then
+    	filecd_usage
+    	return
+    fi
+
     MATCHES_TEXT=`find . -name $1 -type f -exec dirname {} \;`
     MATCHES=( $MATCHES_TEXT )
 
@@ -228,10 +360,25 @@ filecd_completion() {
 }
 complete -F filecd_completion filecd
 
+#----------------------------------------------------------------------------------------------------------------
+# dcd
+#----------------------------------------------------------------------------------------------------------------
 
-usage() 
+dcd_usage() 
 {
     cat << EOF
+
+Overview
+--------
+
+dcd allows you to store a list of directory aliases in a 
+file that can easily be switched to from the command line.
+This functionality can be replicated with aliases, but dcd 
+adds a lot of additional functionality like:
+
+  * Adding aliases without having to source your profile
+    repeatedly.
+  * Autocompletion of aliases.
 
 Usage
 -----
@@ -274,7 +421,7 @@ EOF
 dcd() 
 {
   if [ $# -eq 0 ] ; then
-    usage
+    dcd_usage
     return
   elif [ $1 == "-d" ]; then
     if [ $# -lt 2 ]; then
