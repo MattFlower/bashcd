@@ -1,5 +1,4 @@
 
-
 Intro
 =====
 
@@ -37,6 +36,11 @@ indexing that happens constantly on the mac.
 
 Switch to a parent directory of the current directory.  For example, if the current directory is /home/mflower/code/opensource, 
 you could use ucd home to switch to the /home directory.
+
+Documentation
+=============
+All commands have a help file built into them.  Type the command and press enter to see the help.  I've also copied these
+help files into the wiki: <https://github.com/MattFlower/bashcd/wiki>
 
 Installation
 ============
