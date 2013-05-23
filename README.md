@@ -46,6 +46,14 @@ Add the following line to your .profile, .bashrc, or .bash_profile.
 Once you restart your terminal bashcd will be automatically initialized.  If you wish to try it out without installing it 
 permanently, you can type "source <path to your .bashcd file>" (without the < and > marks).
 
+If you have problems with scripts complaining about dcd after doing this, consider wrapping the source in a check to make sure
+you are in an interactive shell:
+
+
+    if [[ $- == *i* ]]; then
+        source .bashcd
+    fi
+
 Documentation
 =============
 All commands have a help file built into them.  Type the command and press enter to see the help.  I've also copied these
