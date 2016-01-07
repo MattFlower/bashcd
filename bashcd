@@ -29,13 +29,13 @@ special_cd_menu() {
 		done
 
 		echo
-		printf "Your choice: " 
+		printf "Your choice: "
 		read which_match
 		let which_match=$which_match-1
 
 		#Print one more line -- it looks odd otherwise
 		echo
-        
+
 		cd ${matches[which_match]}
 	fi
 }
@@ -55,13 +55,13 @@ Usage
 ucd changes to any parent directory of your current directory.  It also supports
 autocompletion so you can complete the name easily without having to type it out.
 
-This should prevent the mental math necessary to figure out how many dots you will 
+This should prevent the mental math necessary to figure out how many dots you will
 need to type when doing something like cd ../../../..
 
 Example
 -------
-/home/mflower/a/b/c/d/e/f/g$ ucd c 
-/home/mflower/a/b/c$ 
+/home/mflower/a/b/c/d/e/f/g$ ucd c
+/home/mflower/a/b/c$
 
 EOF
 
@@ -100,7 +100,7 @@ ucd() {
 		DIR_MATCHES=()
 
 		while [ $i -le $maxcount ]; do
-			dir=`echo $PARENT_DIR | grep -Eo "^([^/]*/){$i}$1"`			
+			dir=`echo $PARENT_DIR | grep -Eo "^([^/]*/){$i}$1"`
 			if [ $? -eq 0 ]; then
 				DIR_MATCHES[`expr $menuindex - 1`]=$dir
 				printf '%3d. %s \n' $menuindex $dir
@@ -108,15 +108,15 @@ ucd() {
 			fi
 			let i=$i+1
 		done
-	
+
 		echo
-		printf "Your choice: " 
+		printf "Your choice: "
 		read which_match
 		let which_match=$which_match-1
 
 		#Print one more line -- it looks odd otherwise
 		echo
-        
+
 		cd ${DIR_MATCHES[which_match]}
 	fi
 }
@@ -141,7 +141,7 @@ complete -F ucd_completion ucd
 # fcd
 #----------------------------------------------------------------------------------------------------------------
 
-fcd_usage() 
+fcd_usage()
 {
     cat << EOF
 
@@ -150,7 +150,7 @@ Usage
 
   fcd <some_string>
 
-Searches all directories starting at the current one for a file which starts 
+Searches all directories starting at the current one for a file which starts
 with the string <some_string>.  If there is only a single file found, you will
 immediately be switched to that directory.  If there are more than one directory
 found, you will receive a list of matching directories and you can choose one.
@@ -161,7 +161,7 @@ directory tree under your current word, so use it wisely.
 
 Example
 -------
-If you were currently in the directory /home/mflower and the following directories 
+If you were currently in the directory /home/mflower and the following directories
 were present:
 
     /home/mflower/code/test1
@@ -172,15 +172,15 @@ Here are a list of commands and what they would do:
 
     /home/mflower$ fcd test1
     /home/mflower/code/test1$ cd ../..
-    /home/mflower$ fcd test 
-    
+    /home/mflower$ fcd test
+
     Please choose a directory to change to
     --------------------------------------
       1. ./code/test1
       2. ./code/test2
-    
+
     Your choice: 2
-    
+
     /home/mflower/code/test2$ cd ../..
     /home/mflower$ fcd asdf
     No matching directories were found
@@ -189,7 +189,7 @@ Here are a list of commands and what they would do:
 EOF
 }
 
-fcd() {    
+fcd() {
     if [ $# -eq 0 ] ; then
     	fcd_usage
     	return
@@ -211,7 +211,7 @@ fcd_completion() {
 	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
 
 	# $2 is the option to fcd.  If there hasn't been one, it will be blank and
-	# we'll complete on everything.  That's too risky for me, so I will impose a 
+	# we'll complete on everything.  That's too risky for me, so I will impose a
 	# depth limit if there wasn't a parameter passed.
 	if [ -n "$2" ]; then
 		opts=`find . -type d -name "$2*" -exec basename {} \; | sort | uniq`
@@ -222,7 +222,7 @@ fcd_completion() {
 	if [ -n ${cur} ] ; then
 		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 		return 0
-	fi	
+	fi
 }
 complete -F fcd_completion fcd
 
@@ -238,49 +238,49 @@ Usage
 
   lcd <some_string>
 
-Searches in the locate database for a directory which starts with the string 
-<some_string>.  If there is only a single file found, you will immediately be 
-switched to that directory.  If there are more than one directory found, you 
+Searches in the locate database for a directory which starts with the string
+<some_string>.  If there is only a single file found, you will immediately be
+switched to that directory.  If there are more than one directory found, you
 will receive a list of matching directories and you can choose one.
 
 Note that lcd supports the autocompletion functionality in bash.  Just use the
 tab key to complete a word you are typing.  Ambiguous strings, such as single
-letters, are probably a bad idea because they will return an enormous list of 
+letters, are probably a bad idea because they will return an enormous list of
 results from locate.
 
 Limitations
 -----------
-This command works great on machines where the locate database is updated 
-frequently.  If you are unfamiliar with it, the locate database is often found 
-at /var/db/locate.database.  Some sysadmins turn this database off, making it 
+This command works great on machines where the locate database is updated
+frequently.  If you are unfamiliar with it, the locate database is often found
+at /var/db/locate.database.  Some sysadmins turn this database off, making it
 useless for this command.
 
-The locate database is usually updated on something like an hourly cycle.  If 
-your directory was created more recently than that, this command will not be 
-able to see it.  Also, if a directory was deleted since then, this command 
+The locate database is usually updated on something like an hourly cycle.  If
+your directory was created more recently than that, this command will not be
+able to see it.  Also, if a directory was deleted since then, this command
 may erroneously try to change to a directory which is not around anymore.
 
-Finally, OS X users should skip right on over the mcd instead.  The locate 
-database is not updated by default on OS X machines, but the mdfind database 
+Finally, OS X users should skip right on over the mcd instead.  The locate
+database is not updated by default on OS X machines, but the mdfind database
 is -- it is a faster and superior choice for os x boxes.
 
 Example
 -------
     /Users/mflower$ lcd man3
-    
+
     Please choose a directory to change to
     --------------------------------------
-      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3 
-      2. /Developer/usr/X11/share/man/man3 
-      3. /Developer/usr/share/man/man3 
-      4. /opt/local/share/man/man3 
-      5. /opt/local/share/man/man3p 
-      6. /opt/subversion/man/man3 
-      7. /opt/subversion_backup.09192012155729/man/man3 
-      8. /usr/X11/share/man/man3 
-      9. /usr/share/man/man3 
-    
-    Your choice: 
+      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3
+      2. /Developer/usr/X11/share/man/man3
+      3. /Developer/usr/share/man/man3
+      4. /opt/local/share/man/man3
+      5. /opt/local/share/man/man3p
+      6. /opt/subversion/man/man3
+      7. /opt/subversion_backup.09192012155729/man/man3
+      8. /usr/X11/share/man/man3
+      9. /usr/share/man/man3
+
+    Your choice:
 EOF
 }
 
@@ -295,7 +295,7 @@ lcd() {
 
 	# Construct a list of all locate entries that are directories and that match
 	for dir in `locate $1 | grep $1[^/]*$` ; do
-		if [ -d $dir ] ; then       
+		if [ -d $dir ] ; then
 			matches[currentItem]=$dir
 			currentItem=$currentItem+1
 		fi
@@ -323,7 +323,7 @@ lcd_completion() {
 	if [ -n ${cur} ] ; then
 		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 		return 0
-	fi	
+	fi
 }
 complete -F lcd_completion lcd
 
@@ -339,13 +339,13 @@ Usage
 
   mcd <some_string>
 
-Searches in the mdfind database for a directory which starts with the string 
-<some_string>.  If there is only a single file found, you will immediately be 
-switched to that directory.  If there are more than one directory found, you 
+Searches in the mdfind database for a directory which starts with the string
+<some_string>.  If there is only a single file found, you will immediately be
+switched to that directory.  If there are more than one directory found, you
 will receive a list of matching directories and you can choose one.
 
 Note that mcd supports the autocompletion functionality in bash.  Just use the
-tab key to complete a word you are typing.  
+tab key to complete a word you are typing.
 
 Limitations
 -----------
@@ -355,20 +355,20 @@ this is only OS X boxes which have spotlight on them.
 Example
 -------
     /Users/mflower$ mcd man3
-    
+
     Please choose a directory to change to
     --------------------------------------
-      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3 
-      2. /Developer/usr/X11/share/man/man3 
-      3. /Developer/usr/share/man/man3 
-      4. /opt/local/share/man/man3 
-      5. /opt/local/share/man/man3p 
-      6. /opt/subversion/man/man3 
-      7. /opt/subversion_backup.09192012155729/man/man3 
-      8. /usr/X11/share/man/man3 
-      9. /usr/share/man/man3 
-    
-    Your choice: 
+      1. /Developer/Platforms/iPhoneSimulator.platform/Developer/SDKs/iPhoneSimulator5.0.sdk/usr/share/man/man3
+      2. /Developer/usr/X11/share/man/man3
+      3. /Developer/usr/share/man/man3
+      4. /opt/local/share/man/man3
+      5. /opt/local/share/man/man3p
+      6. /opt/subversion/man/man3
+      7. /opt/subversion_backup.09192012155729/man/man3
+      8. /usr/X11/share/man/man3
+      9. /usr/share/man/man3
+
+    Your choice:
 EOF
 }
 
@@ -383,7 +383,7 @@ mcd() {
 
 	# Construct a list of all locate entries that are directories and that match
 	for dir in `mdfind -name $1 | grep $1[^/]*$ | sort` ; do
-		if [ -d $dir ] ; then       
+		if [ -d $dir ] ; then
 			matches[currentItem]=$dir
 			currentItem=$currentItem+1
 		fi
@@ -410,7 +410,7 @@ mcd_completion() {
 	if [ -n ${cur} ] ; then
 		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 		return 0
-	fi	
+	fi
 }
 complete -F mcd_completion mcd
 
@@ -426,18 +426,18 @@ Usage
 
   filecd <name of a source file>
 
-Filecd helps you change to a directory where a file is located. 
+Filecd helps you change to a directory where a file is located.
 
 Example
 -------
 If the following file existed:
 
-    /home/mflower/a/b/c/d/e/somefile.txt 
+    /home/mflower/a/b/c/d/e/somefile.txt
 
 And you typed:
 
     /home/mflower$ filecd somefile.txt
-    /home/mflower/a/b/c/d/e/$ 
+    /home/mflower/a/b/c/d/e/$
 
 Your current directory would be /home/mflower/a/b/c/d/e/ directory.
 
@@ -463,7 +463,7 @@ filecd_completion() {
 	prev=`echo "${COMP_WORDS[COMP_CWORD-1]}" | sed 's/^ *//'`
 
 	# $2 is the option to fcd.  If there hasn't been one, it will be blank and
-	# we'll complete on everything.  That's too risky for me, so I will impose a 
+	# we'll complete on everything.  That's too risky for me, so I will impose a
 	# depth limit if there wasn't a parameter passed.
 	if [ -n "$2" ]; then
 		opts=`find . -type f -name "$2*" -exec basename {} \; | sort | uniq`
@@ -472,7 +472,7 @@ filecd_completion() {
 	if [ -n ${cur} ] ; then
 		COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 		return 0
-	fi	 
+	fi
 }
 complete -F filecd_completion filecd
 
@@ -480,16 +480,16 @@ complete -F filecd_completion filecd
 # dcd
 #----------------------------------------------------------------------------------------------------------------
 
-dcd_usage() 
+dcd_usage()
 {
     cat << EOF
 
 Overview
 --------
 
-dcd allows you to store a list of directory aliases in a 
+dcd allows you to store a list of directory aliases in a
 file that can easily be switched to from the command line.
-This functionality can be replicated with aliases, but dcd 
+This functionality can be replicated with aliases, but dcd
 adds a lot of additional functionality like:
 
   * Adding aliases without having to source your profile
@@ -510,16 +510,21 @@ Edit the list of directory aliases via an editor
 List the directory alias file.
 
   dcd -q
-Figure out what aliases are associated with the current 
+Figure out what aliases are associated with the current
 directory.
 
   dcd -d <alias>
 Remove any aliases pointing to the current directory from
-the dcd config file.
+the dcd config file.  If the alias is omitted, the any
+aliases pointing to the current working directory will be
+deleted.
 
   dcd -a <alias>
-Add the current directory to the dcd.conf file using the 
-provided alias.
+Add the current directory to the dcd.conf file using the
+provided alias.  If the alias is omitted, the last segment
+of the current working directory will be used as the alias
+name.  (i.e. For /some/directory/here, the alias would be
+here)
 
 Example
 -------
@@ -527,43 +532,46 @@ If ~/.dcd/dcd.conf contained the following lines:
 ora=/opt/oracle/product/10.2.0/db_1
 jboss=/opt/dev/jboss/jboss-4.0.4
 
-Then typing 
+Then typing
   dcd ora
 would change to /opt/oracle/product/10.2.0/db_1
 
 EOF
 }
 
-dcd() 
+dcd()
 {
   if [ $# -eq 0 ] ; then
     dcd_usage
     return
   elif [ $1 == "-d" ]; then
-    if [ $# -lt 2 ]; then
-      echo "Please provide the name of the alias you want to delete."
-      echo
-      return
-    fi
-
     if [ $# -gt 2 ]; then
       echo "Too many command line parameters"
       echo
       usage
       return
-    fi 
+    fi
 
     #Delete the actual line from the file
-    cp -f ~/.dcd/dcd.conf ~/.dcd/dcd.conf.backup
-    sed "/$2=/d" ~/.dcd/dcd.conf > ~/.dcd/dcd.conf.new
-    cp -f ~/.dcd/dcd.conf.new ~/.dcd/dcd.conf
+		if [ $# -eq 2 ]; then
+    	cp -f ~/.dcd/dcd.conf ~/.dcd/dcd.conf.backup
+    	sed "/$2=/d" ~/.dcd/dcd.conf > ~/.dcd/dcd.conf.new
+    	cp -f ~/.dcd/dcd.conf.new ~/.dcd/dcd.conf
+		else
+			#The user didn't specify which alias, so we are deleting all aliases
+			#that have the current working directory as their target.
+			CURRENT_DIR=`pwd`
+			cp -f ~/.dcd/dcd.conf ~/.dcd/dcd.conf.backup
+    	sed "\#=$CURRENT_DIR#d" ~/.dcd/dcd.conf > ~/.dcd/dcd.conf.new
+    	cp -f ~/.dcd/dcd.conf.new ~/.dcd/dcd.conf
+		fi
 
     return
   elif [ $1 == "-a" ]; then
     if [ $# -lt 2 ]; then
-      echo "Please provide a name for the new alias."
-      echo
-      return      
+			NEW_ALIAS=`pwd | grep -Eo "/[^/]+$" | cut -c '2-'`
+		else
+			NEW_ALIAS=$2
     fi
 
     # make sure there is a dcd.conf file, if not, create one
@@ -576,9 +584,9 @@ dcd()
     fi
 
     # make sure there isn't already an alias with this name
-    ALIAS_EXISTS=`grep "^$2=" ~/.dcd/dcd.conf`
-    if [ $? -eq 0 ] ; then 
-      echo "An alias by this name already exists, please choose another name."   
+    ALIAS_EXISTS=`grep "^$NEW_ALIAS=" ~/.dcd/dcd.conf`
+    if [ $? -eq 0 ] ; then
+      echo "An alias by this name already exists, please choose another name."
       echo
       return
     fi
@@ -598,7 +606,7 @@ dcd()
     fi
 
     NEW_DIR=`pwd`
-    echo "$2=$NEW_DIR" >> ~/.dcd/dcd.conf
+    echo "$NEW_ALIAS=$NEW_DIR" >> ~/.dcd/dcd.conf
     return
   elif [ $1 == "-e" ]; then
     nano ~/.dcd/dcd.conf
@@ -607,7 +615,7 @@ dcd()
     cat ~/.dcd/dcd.conf
     return
   elif [ $1 == "-q" ]; then
-    cat ~/.dcd/dcd.conf | grep "$(pwd)" | awk -F "=" '{ print $1 }' 
+    cat ~/.dcd/dcd.conf | grep "$(pwd)" | awk -F "=" '{ print $1 }'
 	return
   fi
 
@@ -622,25 +630,25 @@ dcd()
   DCD_ALIAS=${1/\/*/}
   if [[ "$1" = *"/"* ]]; then
     DCD_SUBDIR=`echo $1 | sed -e "s#[^/]*/##"`
-  else 
+  else
     DCD_SUBDIR=""
   fi
 
   # Find the provided string in the dcd.conf file.  We only
   # look for matches that begin with a "^" and end with a "="
-  # which means we don't allow partial completions.  (We do 
+  # which means we don't allow partial completions.  (We do
   # provide programmatic completion though.)
   #
   # I could have just provided a list and let the user pick
-  # the proper option from the list, but I like programmatic 
-  # completion more.  Also, if the user has too many things 
+  # the proper option from the list, but I like programmatic
+  # completion more.  Also, if the user has too many things
   # to complete, that gets ugly quickly.
   DIR=`grep "^$DCD_ALIAS=" ~/.dcd/dcd.conf`
-  if [ $? -eq 0 ] ; then    
-    # There are a couple of tricks here which are worth reminding 
+  if [ $? -eq 0 ] ; then
+    # There are a couple of tricks here which are worth reminding
     # myself of in case I need them later.  The reason why this isn't
     # just a simple cd $DIR is because of spaces in file names.  We
-    # use sed to replace the spaces with "\ " and then make sure that 
+    # use sed to replace the spaces with "\ " and then make sure that
     # the cd is wrapped in quotes.
     if [[ -z "$DCD_SUBDIR" ]]; then
       cd "`echo $DIR | awk -F "=" '{ print $2 }' | sed 's/ /\\ /g'`"
@@ -652,10 +660,10 @@ dcd()
   fi
 }
 
-dcd_completion() 
+dcd_completion()
 {
-    # TODO: We need to work on making completion work properly when 
-    # we append a subdir in dcd.  For example dcd code/Personal.  
+    # TODO: We need to work on making completion work properly when
+    # we append a subdir in dcd.  For example dcd code/Personal.
     # the personal part doesn't work at all right now.
 
     local cur prev opts
